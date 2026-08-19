@@ -1,5 +1,6 @@
 namespace DulceAtardecer.Models.Dtos.Categoria;
 
 public record CreateCategoriaDto(
-    string Nombre
+    string Nombre,
+    string? Descripcion
 );

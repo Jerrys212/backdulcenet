@@ -109,6 +109,7 @@ builder.Services.AddOpenApi("v1");
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+builder.Services.AddScoped<ISubCategoriaRepository, SubCategoriaRepository>();
 builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
 
 MapsterConfig.RegisterMappings();

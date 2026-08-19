@@ -12,6 +12,14 @@ public static class Permissions
         public const string Delete = "categorias.delete";
     }
 
+    public static class SubCategorias
+    {
+        public const string Create = "subcategorias.create";
+        public const string Read = "subcategorias.read";
+        public const string Update = "subcategorias.update";
+        public const string Delete = "subcategorias.delete";
+    }
+
     public static class Productos
     {
         public const string Create = "productos.create";

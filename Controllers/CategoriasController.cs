@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using DulceAtardecer.Common.Responses;
 using DulceAtardecer.Constants;
 using DulceAtardecer.Models;
 using DulceAtardecer.Models.Dtos.Categoria;
@@ -12,21 +13,21 @@ namespace DulceAtardecer.Controllers;
 [ApiController]
 [ApiVersionNeutral]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class CategoriasController(ICategoriaRepository categoriaRepository) : ControllerBase
 {
     [HttpGet]
-    [AllowAnonymous]
     [ResponseCache(CacheProfileName = CacheProfiles.Default20)]
-    [ProducesResponseType(typeof(IEnumerable<CategoriaDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<CategoriaDto>>> GetAllAsync(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<CategoriaDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IEnumerable<CategoriaDto>>>> GetAllAsync(
+        [FromQuery] int page = 1, [FromQuery] int limit = 10, CancellationToken cancellationToken = default)
     {
-        IEnumerable<Categoria> categorias = await categoriaRepository.GetAllAsync(cancellationToken);
-        return Ok(categorias.Adapt<IEnumerable<CategoriaDto>>());
+        (IEnumerable<Categoria> items, int total) = await categoriaRepository.GetAllAsync(page, limit, cancellationToken);
+        IEnumerable<CategoriaDto> dtos = items.Adapt<IEnumerable<CategoriaDto>>();
+        return Ok(new ApiResponse<IEnumerable<CategoriaDto>>(true, dtos, new ApiMeta(page, total)));
     }
 
     [HttpGet("{id:int}")]
-    [AllowAnonymous]
     [ResponseCache(CacheProfileName = CacheProfiles.Default20)]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -37,6 +38,7 @@ public class CategoriasController(ICategoriaRepository categoriaRepository) : Co
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status201Created)]
     public async Task<ActionResult<CategoriaDto>> CreateAsync(CreateCategoriaDto createDto, CancellationToken cancellationToken)
     {
@@ -47,6 +49,7 @@ public class CategoriasController(ICategoriaRepository categoriaRepository) : Co
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateAsync(int id, UpdateCategoriaDto updateDto, CancellationToken cancellationToken)
@@ -57,6 +60,7 @@ public class CategoriasController(ICategoriaRepository categoriaRepository) : Co
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteAsync(int id, CancellationToken cancellationToken)

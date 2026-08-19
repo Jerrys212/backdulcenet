@@ -33,7 +33,7 @@ public static class DataSeeder
 
             // TODO: ajustar permisos por rol si se agregan módulos nuevos (por ahora User solo lee).
             context.RoleClaims.AddRange(
-                new[] { Permissions.Categorias.Read, Permissions.Productos.Read }
+                new[] { Permissions.Categorias.Read, Permissions.SubCategorias.Read, Permissions.Productos.Read }
                     .Select(permission => new IdentityRoleClaim<string>
                     {
                         RoleId = "role-user",
@@ -88,11 +88,20 @@ public static class DataSeeder
             return;
         }
 
-        var tortas = new Categoria { Nombre = "Tortas" };
-        var cupcakes = new Categoria { Nombre = "Cupcakes" };
-        var galletas = new Categoria { Nombre = "Galletas" };
+        DateTime now = DateTime.UtcNow;
+        var tortas = new Categoria { Nombre = "Tortas", Descripcion = "Tortas para toda ocasión", Activo = true, FechaCreacion = now, FechaActualizacion = now };
+        var cupcakes = new Categoria { Nombre = "Cupcakes", Descripcion = "Cupcakes individuales", Activo = true, FechaCreacion = now, FechaActualizacion = now };
+        var galletas = new Categoria { Nombre = "Galletas", Descripcion = "Galletas artesanales", Activo = true, FechaCreacion = now, FechaActualizacion = now };
 
         context.Categorias.AddRange(tortas, cupcakes, galletas);
+
+        context.SubCategorias.AddRange(
+            new SubCategoria { Nombre = "Cuadradas", Categoria = tortas },
+            new SubCategoria { Nombre = "Redondas", Categoria = tortas },
+            new SubCategoria { Nombre = "Clásicos", Categoria = cupcakes },
+            new SubCategoria { Nombre = "Rellenos", Categoria = cupcakes },
+            new SubCategoria { Nombre = "Dulces", Categoria = galletas },
+            new SubCategoria { Nombre = "Saladas", Categoria = galletas });
 
         context.Productos.AddRange(
             new Producto
