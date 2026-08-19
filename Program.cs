@@ -12,6 +12,8 @@ using DulceAtardecer.Repository.IRepository;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -121,6 +123,19 @@ if (app.Environment.IsDevelopment())
     {
         options.SwaggerEndpoint("/openapi/v1.json", "DulceAtardecer v1");
         options.RoutePrefix = "swagger";
+    });
+
+    // ASP.NET Core solo loguea "Now listening on: ..."; esto imprime el link directo a Swagger
+    // una vez que Kestrel ya resolvió las URLs reales (launchSettings, --urls, ASPNETCORE_URLS, etc.).
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        IServerAddressesFeature? addressesFeature = app.Services.GetRequiredService<IServer>()
+            .Features.Get<IServerAddressesFeature>();
+
+        foreach (string address in addressesFeature?.Addresses ?? [])
+        {
+            app.Logger.LogInformation("Swagger UI: {Url}/swagger", address);
+        }
     });
 }
 
