@@ -1,12 +1,15 @@
 using System.Text;
 using Asp.Versioning;
-using DulceAtardecer.Authorization;
+using DulceAtardecer.Common.Authorization;
+using DulceAtardecer.Common.Filters;
+using DulceAtardecer.Common.Middleware;
 using DulceAtardecer.Constants;
 using DulceAtardecer.Data;
 using DulceAtardecer.Mapping;
 using DulceAtardecer.Models;
 using DulceAtardecer.Repository;
 using DulceAtardecer.Repository.IRepository;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -82,7 +85,13 @@ builder.Services.AddControllers(options =>
     options.SuppressAsyncSuffixInActionNames = false;
     options.CacheProfiles.Add(CacheProfiles.Default10, new Microsoft.AspNetCore.Mvc.CacheProfile { Duration = 10 });
     options.CacheProfiles.Add(CacheProfiles.Default20, new Microsoft.AspNetCore.Mvc.CacheProfile { Duration = 20 });
-});
+    options.Filters.Add<ApiResponseWrapperFilter>();
+    options.Filters.Add<ValidationFilter>();
+})
+    // El 400 automático de [ApiController] se apaga para que toda la validación
+    // (y su forma de respuesta) pase siempre por FluentValidation + ExceptionHandlingMiddleware.
+    .ConfigureApiBehaviorOptions(options => options.SuppressModelStateInvalidFilter = true);
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddResponseCaching();
 
 builder.Services.AddCors(options =>
@@ -114,6 +123,8 @@ if (app.Environment.IsDevelopment())
         options.RoutePrefix = "swagger";
     });
 }
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

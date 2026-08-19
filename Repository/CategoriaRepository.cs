@@ -1,3 +1,4 @@
+using DulceAtardecer.Common.Exceptions;
 using DulceAtardecer.Data;
 using DulceAtardecer.Models;
 using DulceAtardecer.Repository.IRepository;
@@ -12,9 +13,10 @@ public class CategoriaRepository(ApplicationDbContext db) : ICategoriaRepository
         return await db.Categorias.AsNoTracking().ToListAsync(cancellationToken);
     }
 
-    public async Task<Categoria?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Categoria> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await db.Categorias.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        Categoria? categoria = await db.Categorias.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        return categoria ?? throw new NotFoundException(nameof(Categoria), id);
     }
 
     public async Task<Categoria> CreateAsync(Categoria categoria, CancellationToken cancellationToken = default)
@@ -24,22 +26,22 @@ public class CategoriaRepository(ApplicationDbContext db) : ICategoriaRepository
         return categoria;
     }
 
-    public async Task<bool> UpdateAsync(Categoria categoria, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(int id, Categoria categoria, CancellationToken cancellationToken = default)
     {
-        db.Categorias.Update(categoria);
-        return await db.SaveChangesAsync(cancellationToken) > 0;
+        Categoria existing = await db.Categorias.FirstOrDefaultAsync(c => c.Id == id, cancellationToken)
+            ?? throw new NotFoundException(nameof(Categoria), id);
+
+        existing.Nombre = categoria.Nombre;
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        Categoria? categoria = await db.Categorias.FindAsync([id], cancellationToken);
-        if (categoria is null)
-        {
-            return false;
-        }
+        Categoria existing = await db.Categorias.FirstOrDefaultAsync(c => c.Id == id, cancellationToken)
+            ?? throw new NotFoundException(nameof(Categoria), id);
 
-        db.Categorias.Remove(categoria);
-        return await db.SaveChangesAsync(cancellationToken) > 0;
+        db.Categorias.Remove(existing);
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)

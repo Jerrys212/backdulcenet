@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using DulceAtardecer.Authorization;
 using DulceAtardecer.Constants;
 using DulceAtardecer.Models;
 using DulceAtardecer.Models.Dtos.Categoria;
@@ -13,7 +12,7 @@ namespace DulceAtardecer.Controllers;
 [ApiController]
 [ApiVersionNeutral]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = "Admin")]
 public class CategoriasController(ICategoriaRepository categoriaRepository) : ControllerBase
 {
     [HttpGet]
@@ -33,17 +32,11 @@ public class CategoriasController(ICategoriaRepository categoriaRepository) : Co
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CategoriaDto>> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
-        Categoria? categoria = await categoriaRepository.GetByIdAsync(id, cancellationToken);
-        if (categoria is null)
-        {
-            return NotFound();
-        }
-
+        Categoria categoria = await categoriaRepository.GetByIdAsync(id, cancellationToken);
         return Ok(categoria.Adapt<CategoriaDto>());
     }
 
     [HttpPost]
-    [HasPermission(Permissions.Categorias.Create)]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status201Created)]
     public async Task<ActionResult<CategoriaDto>> CreateAsync(CreateCategoriaDto createDto, CancellationToken cancellationToken)
     {
@@ -54,33 +47,21 @@ public class CategoriasController(ICategoriaRepository categoriaRepository) : Co
     }
 
     [HttpPut("{id:int}")]
-    [HasPermission(Permissions.Categorias.Update)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateAsync(int id, UpdateCategoriaDto updateDto, CancellationToken cancellationToken)
     {
-        if (!await categoriaRepository.ExistsAsync(id, cancellationToken))
-        {
-            return NotFound();
-        }
-
         Categoria categoria = updateDto.Adapt<Categoria>();
-        categoria.Id = id;
-        await categoriaRepository.UpdateAsync(categoria, cancellationToken);
+        await categoriaRepository.UpdateAsync(id, categoria, cancellationToken);
         return NoContent();
     }
 
     [HttpDelete("{id:int}")]
-    [HasPermission(Permissions.Categorias.Delete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteAsync(int id, CancellationToken cancellationToken)
     {
-        if (!await categoriaRepository.DeleteAsync(id, cancellationToken))
-        {
-            return NotFound();
-        }
-
+        await categoriaRepository.DeleteAsync(id, cancellationToken);
         return NoContent();
     }
 }

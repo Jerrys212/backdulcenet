@@ -1,3 +1,4 @@
+using DulceAtardecer.Common.Exceptions;
 using DulceAtardecer.Data;
 using DulceAtardecer.Models;
 using DulceAtardecer.Repository.IRepository;
@@ -12,10 +13,11 @@ public class ProductoRepository(ApplicationDbContext db) : IProductoRepository
         return await db.Productos.AsNoTracking().Include(p => p.Categoria).ToListAsync(cancellationToken);
     }
 
-    public async Task<Producto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Producto> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await db.Productos.AsNoTracking().Include(p => p.Categoria)
+        Producto? producto = await db.Productos.AsNoTracking().Include(p => p.Categoria)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        return producto ?? throw new NotFoundException(nameof(Producto), id);
     }
 
     public async Task<Producto> CreateAsync(Producto producto, CancellationToken cancellationToken = default)
@@ -25,31 +27,30 @@ public class ProductoRepository(ApplicationDbContext db) : IProductoRepository
         return producto;
     }
 
-    public async Task<bool> UpdateAsync(Producto producto, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(int id, Producto producto, CancellationToken cancellationToken = default)
     {
-        db.Productos.Update(producto);
-        return await db.SaveChangesAsync(cancellationToken) > 0;
-    }
+        Producto existing = await db.Productos.FirstOrDefaultAsync(p => p.Id == id, cancellationToken)
+            ?? throw new NotFoundException(nameof(Producto), id);
 
-    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
-    {
-        Producto? producto = await db.Productos.FindAsync([id], cancellationToken);
-        if (producto is null)
+        existing.Nombre = producto.Nombre;
+        existing.Descripcion = producto.Descripcion;
+        existing.Precio = producto.Precio;
+        existing.CategoriaId = producto.CategoriaId;
+        if (!string.IsNullOrEmpty(producto.ImgUrl))
         {
-            return false;
+            existing.ImgUrl = producto.ImgUrl;
+            existing.ImgUrlLocal = producto.ImgUrlLocal;
         }
 
-        db.Productos.Remove(producto);
-        return await db.SaveChangesAsync(cancellationToken) > 0;
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await db.Productos.AnyAsync(p => p.Id == id, cancellationToken);
-    }
+        Producto existing = await db.Productos.FirstOrDefaultAsync(p => p.Id == id, cancellationToken)
+            ?? throw new NotFoundException(nameof(Producto), id);
 
-    public async Task<bool> CategoriaExistsAsync(int categoriaId, CancellationToken cancellationToken = default)
-    {
-        return await db.Categorias.AnyAsync(c => c.Id == categoriaId, cancellationToken);
+        db.Productos.Remove(existing);
+        await db.SaveChangesAsync(cancellationToken);
     }
 }
