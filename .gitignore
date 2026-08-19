@@ -1,0 +1,16 @@
+## .NET
+bin/
+obj/
+*.user
+
+## Environment / secrets
+.env
+
+## IDE
+.vs/
+.idea/
+*.swp
+
+## OS
+.DS_Store
+Thumbs.db
