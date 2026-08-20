@@ -3,6 +3,7 @@ using DulceAtardecer.Models.Dtos.Categoria;
 using DulceAtardecer.Models.Dtos.Extra;
 using DulceAtardecer.Models.Dtos.Producto;
 using DulceAtardecer.Models.Dtos.SubCategoria;
+using DulceAtardecer.Models.Dtos.Venta;
 using Mapster;
 
 namespace DulceAtardecer.Mapping;
@@ -67,5 +68,13 @@ public static class MapsterConfig
             .Ignore(dest => dest.Activo)
             .Ignore(dest => dest.FechaCreacion)
             .Ignore(dest => dest.FechaActualizacion);
+
+        TypeAdapterConfig<VentaItem, VentaItemDto>.NewConfig()
+            .Map(dest => dest.Extras, src => src.Extras.Select(e =>
+                new VentaItemExtraDto(e.Extra!.Id, e.Extra.Nombre, e.Extra.Precio)));
+
+        TypeAdapterConfig<Venta, VentaDto>.NewConfig()
+            .Map(dest => dest.SellerNombre, src => src.Seller != null ? src.Seller.Nombre : string.Empty)
+            .Map(dest => dest.EstadoActualizadoPorNombre, src => src.EstadoActualizadoPor != null ? src.EstadoActualizadoPor.Nombre : string.Empty);
     }
 }
