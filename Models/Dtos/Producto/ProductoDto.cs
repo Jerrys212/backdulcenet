@@ -6,6 +6,11 @@ public record ProductoDto(
     string Descripcion,
     decimal Precio,
     string ImgUrl,
+    bool Activo,
+    DateTime FechaCreacion,
+    DateTime FechaActualizacion,
     int CategoriaId,
-    string CategoriaNombre
+    string CategoriaNombre,
+    int SubCategoriaId,
+    string SubCategoriaNombre
 );

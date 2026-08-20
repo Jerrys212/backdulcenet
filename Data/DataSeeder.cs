@@ -95,13 +95,15 @@ public static class DataSeeder
 
         context.Categorias.AddRange(tortas, cupcakes, galletas);
 
+        var tortasCuadradas = new SubCategoria { Nombre = "Cuadradas", Categoria = tortas };
+        var tortasRedondas = new SubCategoria { Nombre = "Redondas", Categoria = tortas };
+        var cupcakesClasicos = new SubCategoria { Nombre = "Clásicos", Categoria = cupcakes };
+        var cupcakesRellenos = new SubCategoria { Nombre = "Rellenos", Categoria = cupcakes };
+        var galletasDulces = new SubCategoria { Nombre = "Dulces", Categoria = galletas };
+        var galletasSaladas = new SubCategoria { Nombre = "Saladas", Categoria = galletas };
+
         context.SubCategorias.AddRange(
-            new SubCategoria { Nombre = "Cuadradas", Categoria = tortas },
-            new SubCategoria { Nombre = "Redondas", Categoria = tortas },
-            new SubCategoria { Nombre = "Clásicos", Categoria = cupcakes },
-            new SubCategoria { Nombre = "Rellenos", Categoria = cupcakes },
-            new SubCategoria { Nombre = "Dulces", Categoria = galletas },
-            new SubCategoria { Nombre = "Saladas", Categoria = galletas });
+            tortasCuadradas, tortasRedondas, cupcakesClasicos, cupcakesRellenos, galletasDulces, galletasSaladas);
 
         context.Productos.AddRange(
             new Producto
@@ -111,7 +113,11 @@ public static class DataSeeder
                 Precio = 18500m,
                 ImgUrl = "https://placehold.co/400x400?text=Torta+Chocolate",
                 ImgUrlLocal = string.Empty,
-                Categoria = tortas
+                Activo = true,
+                FechaCreacion = now,
+                FechaActualizacion = now,
+                Categoria = tortas,
+                SubCategoria = tortasRedondas
             },
             new Producto
             {
@@ -120,7 +126,11 @@ public static class DataSeeder
                 Precio = 19500m,
                 ImgUrl = "https://placehold.co/400x400?text=Red+Velvet",
                 ImgUrlLocal = string.Empty,
-                Categoria = tortas
+                Activo = true,
+                FechaCreacion = now,
+                FechaActualizacion = now,
+                Categoria = tortas,
+                SubCategoria = tortasCuadradas
             },
             new Producto
             {
@@ -129,7 +139,11 @@ public static class DataSeeder
                 Precio = 2500m,
                 ImgUrl = "https://placehold.co/400x400?text=Cupcake+Vainilla",
                 ImgUrlLocal = string.Empty,
-                Categoria = cupcakes
+                Activo = true,
+                FechaCreacion = now,
+                FechaActualizacion = now,
+                Categoria = cupcakes,
+                SubCategoria = cupcakesClasicos
             },
             new Producto
             {
@@ -138,7 +152,11 @@ public static class DataSeeder
                 Precio = 1800m,
                 ImgUrl = "https://placehold.co/400x400?text=Galletas+Avena",
                 ImgUrlLocal = string.Empty,
-                Categoria = galletas
+                Activo = true,
+                FechaCreacion = now,
+                FechaActualizacion = now,
+                Categoria = galletas,
+                SubCategoria = galletasDulces
             });
     }
 }
