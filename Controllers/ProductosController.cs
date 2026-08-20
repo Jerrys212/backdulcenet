@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using DulceAtardecer.Common.Responses;
 using DulceAtardecer.Constants;
 using DulceAtardecer.Models;
 using DulceAtardecer.Models.Dtos.Producto;
@@ -12,24 +13,24 @@ namespace DulceAtardecer.Controllers;
 [ApiController]
 [ApiVersionNeutral]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class ProductosController(IProductoRepository productoRepository, IWebHostEnvironment webHostEnvironment)
     : ControllerBase
 {
     private const string ImagesFolder = "ProductoImages";
 
     [HttpGet]
-    [AllowAnonymous]
     [ResponseCache(CacheProfileName = CacheProfiles.Default10)]
-    [ProducesResponseType(typeof(IEnumerable<ProductoDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ProductoDto>>> GetAllAsync(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<ProductoDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IEnumerable<ProductoDto>>>> GetAllAsync(
+        [FromQuery] int page = 1, [FromQuery] int limit = 10, CancellationToken cancellationToken = default)
     {
-        IEnumerable<Producto> productos = await productoRepository.GetAllAsync(cancellationToken);
-        return Ok(productos.Adapt<IEnumerable<ProductoDto>>());
+        (IEnumerable<Producto> items, int total) = await productoRepository.GetAllAsync(page, limit, cancellationToken);
+        IEnumerable<ProductoDto> dtos = items.Adapt<IEnumerable<ProductoDto>>();
+        return Ok(new ApiResponse<IEnumerable<ProductoDto>>(true, dtos, new ApiMeta(page, total)));
     }
 
     [HttpGet("{id:int}")]
-    [AllowAnonymous]
     [ResponseCache(CacheProfileName = CacheProfiles.Default10)]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -40,6 +41,7 @@ public class ProductosController(IProductoRepository productoRepository, IWebHos
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -63,6 +65,7 @@ public class ProductosController(IProductoRepository productoRepository, IWebHos
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -83,6 +86,7 @@ public class ProductosController(IProductoRepository productoRepository, IWebHos
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteAsync(int id, CancellationToken cancellationToken)

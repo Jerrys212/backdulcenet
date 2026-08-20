@@ -8,7 +8,13 @@ public class Producto
     public decimal Precio { get; set; }
     public string ImgUrl { get; set; } = string.Empty;
     public string ImgUrlLocal { get; set; } = string.Empty;
+    public bool Activo { get; set; } = true;
+    public DateTime FechaCreacion { get; set; }
+    public DateTime FechaActualizacion { get; set; }
 
     public int CategoriaId { get; set; }
     public Categoria? Categoria { get; set; }
+
+    public int SubCategoriaId { get; set; }
+    public SubCategoria? SubCategoria { get; set; }
 }

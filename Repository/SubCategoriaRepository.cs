@@ -52,4 +52,9 @@ public class SubCategoriaRepository(ApplicationDbContext db) : ISubCategoriaRepo
         db.SubCategorias.Remove(existing);
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<bool> ExistsAsync(int id, int categoriaId, CancellationToken cancellationToken = default)
+    {
+        return await db.SubCategorias.AnyAsync(sc => sc.Id == id && sc.CategoriaId == categoriaId, cancellationToken);
+    }
 }

@@ -35,6 +35,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Producto>()
+            .Property(p => p.Nombre)
+            .HasMaxLength(150);
+
+        builder.Entity<Producto>()
+            .Property(p => p.Descripcion)
+            .HasMaxLength(255);
+
+        builder.Entity<Producto>()
             .Property(p => p.Precio)
             .HasColumnType("decimal(18,2)");
 
@@ -42,6 +50,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasOne(p => p.Categoria)
             .WithMany(c => c.Productos)
             .HasForeignKey(p => p.CategoriaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Producto>()
+            .HasOne(p => p.SubCategoria)
+            .WithMany()
+            .HasForeignKey(p => p.SubCategoriaId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<RefreshToken>()

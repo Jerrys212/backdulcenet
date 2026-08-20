@@ -34,16 +34,23 @@ public static class MapsterConfig
             .Ignore(dest => dest.Id);
 
         TypeAdapterConfig<Producto, ProductoDto>.NewConfig()
-            .Map(dest => dest.CategoriaNombre, src => src.Categoria != null ? src.Categoria.Nombre : string.Empty);
+            .Map(dest => dest.CategoriaNombre, src => src.Categoria != null ? src.Categoria.Nombre : string.Empty)
+            .Map(dest => dest.SubCategoriaNombre, src => src.SubCategoria != null ? src.SubCategoria.Nombre : string.Empty);
 
         TypeAdapterConfig<CreateProductoDto, Producto>.NewConfig()
             .Ignore(dest => dest.Id)
             .Ignore(dest => dest.ImgUrl)
-            .Ignore(dest => dest.ImgUrlLocal);
+            .Ignore(dest => dest.ImgUrlLocal)
+            .Ignore(dest => dest.Activo)
+            .Ignore(dest => dest.FechaCreacion)
+            .Ignore(dest => dest.FechaActualizacion);
 
         TypeAdapterConfig<UpdateProductoDto, Producto>.NewConfig()
             .Ignore(dest => dest.Id)
             .Ignore(dest => dest.ImgUrl)
-            .Ignore(dest => dest.ImgUrlLocal);
+            .Ignore(dest => dest.ImgUrlLocal)
+            .Ignore(dest => dest.Activo)
+            .Ignore(dest => dest.FechaCreacion)
+            .Ignore(dest => dest.FechaActualizacion);
     }
 }

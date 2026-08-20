@@ -8,6 +8,7 @@ public class CreateProductoDto
     public string Descripcion { get; set; } = string.Empty;
     public decimal Precio { get; set; }
     public int CategoriaId { get; set; }
+    public int SubCategoriaId { get; set; }
 
     [FromForm]
     public IFormFile? Imagen { get; set; }
