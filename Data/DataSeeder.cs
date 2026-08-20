@@ -13,6 +13,9 @@ public static class DataSeeder
 
         SeedCategoriasYProductos(context);
         await context.SaveChangesAsync(cancellationToken);
+
+        SeedExtras(context);
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     private static void SeedRolesAndUsers(ApplicationDbContext context)
@@ -33,7 +36,11 @@ public static class DataSeeder
 
             // TODO: ajustar permisos por rol si se agregan módulos nuevos (por ahora User solo lee).
             context.RoleClaims.AddRange(
-                new[] { Permissions.Categorias.Read, Permissions.SubCategorias.Read, Permissions.Productos.Read }
+                new[]
+                {
+                    Permissions.Categorias.Read, Permissions.SubCategorias.Read,
+                    Permissions.Productos.Read, Permissions.Extras.Read
+                }
                     .Select(permission => new IdentityRoleClaim<string>
                     {
                         RoleId = "role-user",
@@ -158,5 +165,20 @@ public static class DataSeeder
                 Categoria = galletas,
                 SubCategoria = galletasDulces
             });
+    }
+
+    private static void SeedExtras(ApplicationDbContext context)
+    {
+        if (context.Extras.Any())
+        {
+            return;
+        }
+
+        DateTime now = DateTime.UtcNow;
+        context.Extras.AddRange(
+            new Extra { Nombre = "Vela de cumpleaños", Precio = 50m, Activo = true, FechaCreacion = now, FechaActualizacion = now },
+            new Extra { Nombre = "Tarjeta personalizada", Precio = 80m, Activo = true, FechaCreacion = now, FechaActualizacion = now },
+            new Extra { Nombre = "Topper decorativo", Precio = 150m, Activo = true, FechaCreacion = now, FechaActualizacion = now },
+            new Extra { Nombre = "Empaque de regalo", Precio = 100m, Activo = true, FechaCreacion = now, FechaActualizacion = now });
     }
 }

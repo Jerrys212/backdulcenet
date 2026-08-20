@@ -1,5 +1,6 @@
 using DulceAtardecer.Models;
 using DulceAtardecer.Models.Dtos.Categoria;
+using DulceAtardecer.Models.Dtos.Extra;
 using DulceAtardecer.Models.Dtos.Producto;
 using DulceAtardecer.Models.Dtos.SubCategoria;
 using Mapster;
@@ -49,6 +50,20 @@ public static class MapsterConfig
             .Ignore(dest => dest.Id)
             .Ignore(dest => dest.ImgUrl)
             .Ignore(dest => dest.ImgUrlLocal)
+            .Ignore(dest => dest.Activo)
+            .Ignore(dest => dest.FechaCreacion)
+            .Ignore(dest => dest.FechaActualizacion);
+
+        TypeAdapterConfig<Extra, ExtraDto>.NewConfig();
+
+        TypeAdapterConfig<CreateExtraDto, Extra>.NewConfig()
+            .Ignore(dest => dest.Id)
+            .Ignore(dest => dest.Activo)
+            .Ignore(dest => dest.FechaCreacion)
+            .Ignore(dest => dest.FechaActualizacion);
+
+        TypeAdapterConfig<UpdateExtraDto, Extra>.NewConfig()
+            .Ignore(dest => dest.Id)
             .Ignore(dest => dest.Activo)
             .Ignore(dest => dest.FechaCreacion)
             .Ignore(dest => dest.FechaActualizacion);

@@ -28,6 +28,14 @@ public static class Permissions
         public const string Delete = "productos.delete";
     }
 
+    public static class Extras
+    {
+        public const string Create = "extras.create";
+        public const string Read = "extras.read";
+        public const string Update = "extras.update";
+        public const string Delete = "extras.delete";
+    }
+
     public static IReadOnlyList<string> GetAll()
     {
         return typeof(Permissions)

@@ -10,6 +10,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Categoria> Categorias => Set<Categoria>();
     public DbSet<SubCategoria> SubCategorias => Set<SubCategoria>();
     public DbSet<Producto> Productos => Set<Producto>();
+    public DbSet<Extra> Extras => Set<Extra>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -57,6 +58,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .WithMany()
             .HasForeignKey(p => p.SubCategoriaId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Extra>()
+            .Property(e => e.Nombre)
+            .HasMaxLength(100);
+
+        builder.Entity<Extra>()
+            .Property(e => e.Precio)
+            .HasColumnType("decimal(18,2)");
 
         builder.Entity<RefreshToken>()
             .HasIndex(rt => rt.Token)
