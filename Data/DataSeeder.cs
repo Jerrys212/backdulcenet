@@ -212,8 +212,8 @@ public static class DataSeeder
             Precio = torta.Precio,
             Cantidad = 1
         };
-        itemTorta.Extras.Add(new VentaItemExtra { ExtraId = vela.Id });
-        itemTorta.Extras.Add(new VentaItemExtra { ExtraId = tarjeta.Id });
+        itemTorta.Extras.Add(new VentaItemExtra { ExtraId = vela.Id, Precio = vela.Precio });
+        itemTorta.Extras.Add(new VentaItemExtra { ExtraId = tarjeta.Id, Precio = tarjeta.Precio });
         itemTorta.Subtotal = (torta.Precio * itemTorta.Cantidad) + vela.Precio + tarjeta.Precio;
 
         var ventaPendiente = new Venta

@@ -71,7 +71,7 @@ public static class MapsterConfig
 
         TypeAdapterConfig<VentaItem, VentaItemDto>.NewConfig()
             .Map(dest => dest.Extras, src => src.Extras.Select(e =>
-                new VentaItemExtraDto(e.Extra!.Id, e.Extra.Nombre, e.Extra.Precio)));
+                new VentaItemExtraDto(e.Extra!.Id, e.Extra.Nombre, e.Precio)));
 
         TypeAdapterConfig<Venta, VentaDto>.NewConfig()
             .Map(dest => dest.SellerNombre, src => src.Seller != null ? src.Seller.Nombre : string.Empty)

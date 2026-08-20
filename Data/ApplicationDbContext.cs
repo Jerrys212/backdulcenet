@@ -122,6 +122,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasKey(vie => new { vie.VentaItemId, vie.ExtraId });
 
         builder.Entity<VentaItemExtra>()
+            .Property(vie => vie.Precio)
+            .HasColumnType("decimal(18,2)");
+
+        builder.Entity<VentaItemExtra>()
             .HasOne(vie => vie.VentaItem)
             .WithMany(vi => vi.Extras)
             .HasForeignKey(vie => vie.VentaItemId)
