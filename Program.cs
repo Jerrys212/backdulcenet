@@ -9,6 +9,7 @@ using DulceAtardecer.Mapping;
 using DulceAtardecer.Models;
 using DulceAtardecer.Repository;
 using DulceAtardecer.Repository.IRepository;
+using DulceAtardecer.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -98,9 +99,8 @@ builder.Services.AddResponseCaching();
 
 builder.Services.AddCors(options =>
 {
-    // TODO: reemplazar por los orígenes reales del frontend cuando exista.
     options.AddPolicy(PolicyNames.AllowSpecificOrigin, policy =>
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173")
+        policy.WithOrigins("http://localhost:3001")
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -113,7 +113,7 @@ builder.Services.AddScoped<ISubCategoriaRepository, SubCategoriaRepository>();
 builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
 builder.Services.AddScoped<IExtraRepository, ExtraRepository>();
 builder.Services.AddScoped<IVentaRepository, VentaRepository>();
-builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
+builder.Services.AddScoped<IReportesService, ReportesService>();
 
 MapsterConfig.RegisterMappings();
 
