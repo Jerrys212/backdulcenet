@@ -29,9 +29,7 @@ public class ReporteRepository(ApplicationDbContext db) : IReporteRepository
     public async Task<DateRangeReporteDto> GetDateRangeAsync(
         DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
-        List<Venta> sales = await db.Ventas.AsNoTracking()
-            .Include(v => v.Items)
-            .Where(v => v.FechaCreacion >= startDate && v.FechaCreacion <= endDate)
+        List<Venta> sales = await FilterByDateRange(db.Ventas.AsNoTracking().Include(v => v.Items), startDate, endDate)
             .ToListAsync(cancellationToken);
 
         Dictionary<int, (int QuantitySold, decimal TotalAmount)> stats = AggregateProductStats(sales.SelectMany(s => s.Items));
