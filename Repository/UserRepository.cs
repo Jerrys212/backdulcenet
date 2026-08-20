@@ -6,6 +6,7 @@ using DulceAtardecer.Common.Exceptions;
 using DulceAtardecer.Data;
 using DulceAtardecer.Models;
 using DulceAtardecer.Models.Dtos.Auth;
+using DulceAtardecer.Models.Dtos.Usuario;
 using DulceAtardecer.Repository.IRepository;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -102,6 +103,154 @@ public class UserRepository(
 
         existing.RevokedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<(IEnumerable<UsuarioDto> Items, int Total)> GetUsuariosAsync(
+        int page, int limit, CancellationToken cancellationToken = default)
+    {
+        page = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 100);
+
+        IQueryable<ApplicationUser> query = userManager.Users.OrderBy(u => u.UserName);
+
+        int total = await query.CountAsync(cancellationToken);
+        List<ApplicationUser> users = await query
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        var items = new List<UsuarioDto>(users.Count);
+        foreach (ApplicationUser user in users)
+        {
+            items.Add(await BuildUsuarioDtoAsync(user));
+        }
+
+        return (items, total);
+    }
+
+    public async Task<UsuarioDto> GetUsuarioByIdAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ApplicationUser user = await userManager.FindByIdAsync(id)
+            ?? throw new NotFoundException(nameof(ApplicationUser), id);
+        return await BuildUsuarioDtoAsync(user);
+    }
+
+    public async Task<UsuarioDto> CreateUsuarioAsync(CreateUsuarioDto createDto, CancellationToken cancellationToken = default)
+    {
+        if (await userManager.FindByEmailAsync(createDto.Email) is not null)
+        {
+            throw new ConflictException("El email ya está en uso.");
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = createDto.Username,
+            Email = createDto.Email,
+            EmailConfirmed = true,
+            Nombre = createDto.Nombre
+        };
+
+        IdentityResult result = await userManager.CreateAsync(user, createDto.Password);
+        if (!result.Succeeded)
+        {
+            var errors = new Dictionary<string, string[]>
+            {
+                ["password"] = result.Errors.Select(e => e.Description).ToArray()
+            };
+            throw new ValidationException(errors);
+        }
+
+        await AssignRoleAsync(user, createDto.Role);
+
+        return await BuildUsuarioDtoAsync(user);
+    }
+
+    public async Task UpdateUsuarioAsync(string id, UpdateUsuarioDto updateDto, CancellationToken cancellationToken = default)
+    {
+        ApplicationUser user = await userManager.FindByIdAsync(id)
+            ?? throw new NotFoundException(nameof(ApplicationUser), id);
+
+        ApplicationUser? existingWithEmail = await userManager.FindByEmailAsync(updateDto.Email);
+        if (existingWithEmail is not null && existingWithEmail.Id != user.Id)
+        {
+            throw new ConflictException("El email ya está en uso por otro usuario.");
+        }
+
+        user.Nombre = updateDto.Nombre;
+        user.Email = updateDto.Email;
+        user.NormalizedEmail = updateDto.Email.ToUpperInvariant();
+
+        user.LockoutEnabled = true;
+        user.LockoutEnd = updateDto.IsActive ? null : DateTimeOffset.MaxValue;
+
+        await AssignRoleAsync(user, updateDto.Role);
+
+        IdentityResult result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = new Dictionary<string, string[]>
+            {
+                ["usuario"] = result.Errors.Select(e => e.Description).ToArray()
+            };
+            throw new ValidationException(errors);
+        }
+    }
+
+    public async Task DeleteUsuarioAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ApplicationUser user = await userManager.FindByIdAsync(id)
+            ?? throw new NotFoundException(nameof(ApplicationUser), id);
+
+        user.LockoutEnabled = true;
+        user.LockoutEnd = DateTimeOffset.MaxValue;
+        await userManager.UpdateAsync(user);
+    }
+
+    public async Task ResetPasswordAsync(string id, string newPassword, CancellationToken cancellationToken = default)
+    {
+        ApplicationUser user = await userManager.FindByIdAsync(id)
+            ?? throw new NotFoundException(nameof(ApplicationUser), id);
+
+        string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+        IdentityResult result = await userManager.ResetPasswordAsync(user, resetToken, newPassword);
+        if (!result.Succeeded)
+        {
+            var errors = new Dictionary<string, string[]>
+            {
+                ["password"] = result.Errors.Select(e => e.Description).ToArray()
+            };
+            throw new ValidationException(errors);
+        }
+    }
+
+    private async Task AssignRoleAsync(ApplicationUser user, string role)
+    {
+        IList<string> currentRoles = await userManager.GetRolesAsync(user);
+        if (currentRoles.Count > 0)
+        {
+            await userManager.RemoveFromRolesAsync(user, currentRoles);
+        }
+
+        if (!await roleManager.RoleExistsAsync(role))
+        {
+            await roleManager.CreateAsync(new IdentityRole(role));
+        }
+
+        await userManager.AddToRoleAsync(user, role);
+    }
+
+    private async Task<UsuarioDto> BuildUsuarioDtoAsync(ApplicationUser user)
+    {
+        IList<string> roles = await userManager.GetRolesAsync(user);
+        bool isActive = user.LockoutEnd is null || user.LockoutEnd <= DateTimeOffset.UtcNow;
+
+        return new UsuarioDto(
+            user.Id,
+            user.UserName ?? string.Empty,
+            user.Email ?? string.Empty,
+            user.Nombre,
+            roles,
+            isActive);
     }
 
     private async Task<AuthResponseDto> IssueTokensAsync(ApplicationUser user, CancellationToken cancellationToken)

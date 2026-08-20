@@ -44,6 +44,19 @@ public static class Permissions
         public const string Delete = "ventas.delete";
     }
 
+    public static class Usuarios
+    {
+        public const string Create = "usuarios.create";
+        public const string Read = "usuarios.read";
+        public const string Update = "usuarios.update";
+        public const string Delete = "usuarios.delete";
+    }
+
+    public static class Reportes
+    {
+        public const string Read = "reportes.read";
+    }
+
     public static IReadOnlyList<string> GetAll()
     {
         return typeof(Permissions)
