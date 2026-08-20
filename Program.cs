@@ -112,6 +112,7 @@ builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
 builder.Services.AddScoped<ISubCategoriaRepository, SubCategoriaRepository>();
 builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
 builder.Services.AddScoped<IExtraRepository, ExtraRepository>();
+builder.Services.AddScoped<IVentaRepository, VentaRepository>();
 
 MapsterConfig.RegisterMappings();
 

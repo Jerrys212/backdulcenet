@@ -16,6 +16,9 @@ public static class DataSeeder
 
         SeedExtras(context);
         await context.SaveChangesAsync(cancellationToken);
+
+        SeedVentas(context);
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     private static void SeedRolesAndUsers(ApplicationDbContext context)
@@ -39,7 +42,7 @@ public static class DataSeeder
                 new[]
                 {
                     Permissions.Categorias.Read, Permissions.SubCategorias.Read,
-                    Permissions.Productos.Read, Permissions.Extras.Read
+                    Permissions.Productos.Read, Permissions.Extras.Read, Permissions.Ventas.Read
                 }
                     .Select(permission => new IdentityRoleClaim<string>
                     {
@@ -180,5 +183,74 @@ public static class DataSeeder
             new Extra { Nombre = "Tarjeta personalizada", Precio = 80m, Activo = true, FechaCreacion = now, FechaActualizacion = now },
             new Extra { Nombre = "Topper decorativo", Precio = 150m, Activo = true, FechaCreacion = now, FechaActualizacion = now },
             new Extra { Nombre = "Empaque de regalo", Precio = 100m, Activo = true, FechaCreacion = now, FechaActualizacion = now });
+    }
+
+    private static void SeedVentas(ApplicationDbContext context)
+    {
+        if (context.Ventas.Any())
+        {
+            return;
+        }
+
+        ApplicationUser? admin = context.Users.FirstOrDefault(u => u.Id == "user-admin");
+        Producto? torta = context.Productos.FirstOrDefault(p => p.Nombre == "Torta de Chocolate");
+        Producto? cupcake = context.Productos.FirstOrDefault(p => p.Nombre == "Cupcake de Vainilla");
+        Extra? vela = context.Extras.FirstOrDefault(e => e.Nombre == "Vela de cumpleaños");
+        Extra? tarjeta = context.Extras.FirstOrDefault(e => e.Nombre == "Tarjeta personalizada");
+
+        if (admin is null || torta is null || cupcake is null || vela is null || tarjeta is null)
+        {
+            return;
+        }
+
+        DateTime now = DateTime.UtcNow;
+
+        var itemTorta = new VentaItem
+        {
+            ProductoId = torta.Id,
+            Nombre = torta.Nombre,
+            Precio = torta.Precio,
+            Cantidad = 1
+        };
+        itemTorta.Extras.Add(new VentaItemExtra { ExtraId = vela.Id });
+        itemTorta.Extras.Add(new VentaItemExtra { ExtraId = tarjeta.Id });
+        itemTorta.Subtotal = (torta.Precio * itemTorta.Cantidad) + vela.Precio + tarjeta.Precio;
+
+        var ventaPendiente = new Venta
+        {
+            Cliente = "Cliente de Prueba",
+            SellerId = admin.Id,
+            Estado = VentaEstados.Pendiente,
+            EstadoActualizadoEn = now,
+            EstadoActualizadoPorId = admin.Id,
+            FechaCreacion = now,
+            FechaActualizacion = now,
+            Total = itemTorta.Subtotal
+        };
+        ventaPendiente.Items.Add(itemTorta);
+
+        var itemCupcake = new VentaItem
+        {
+            ProductoId = cupcake.Id,
+            Nombre = cupcake.Nombre,
+            Precio = cupcake.Precio,
+            Cantidad = 6,
+            Subtotal = cupcake.Precio * 6
+        };
+
+        var ventaPagada = new Venta
+        {
+            Cliente = "Otro Cliente de Prueba",
+            SellerId = admin.Id,
+            Estado = VentaEstados.Pagada,
+            EstadoActualizadoEn = now,
+            EstadoActualizadoPorId = admin.Id,
+            FechaCreacion = now,
+            FechaActualizacion = now,
+            Total = itemCupcake.Subtotal
+        };
+        ventaPagada.Items.Add(itemCupcake);
+
+        context.Ventas.AddRange(ventaPendiente, ventaPagada);
     }
 }

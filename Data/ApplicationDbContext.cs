@@ -11,6 +11,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<SubCategoria> SubCategorias => Set<SubCategoria>();
     public DbSet<Producto> Productos => Set<Producto>();
     public DbSet<Extra> Extras => Set<Extra>();
+    public DbSet<Venta> Ventas => Set<Venta>();
+    public DbSet<VentaItem> VentaItems => Set<VentaItem>();
+    public DbSet<VentaItemExtra> VentaItemExtras => Set<VentaItemExtra>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -66,6 +69,69 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<Extra>()
             .Property(e => e.Precio)
             .HasColumnType("decimal(18,2)");
+
+        builder.Entity<Venta>()
+            .Property(v => v.Cliente)
+            .HasMaxLength(100);
+
+        builder.Entity<Venta>()
+            .Property(v => v.Estado)
+            .HasMaxLength(50);
+
+        builder.Entity<Venta>()
+            .Property(v => v.Total)
+            .HasColumnType("decimal(18,2)");
+
+        builder.Entity<Venta>()
+            .HasOne(v => v.Seller)
+            .WithMany()
+            .HasForeignKey(v => v.SellerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Venta>()
+            .HasOne(v => v.EstadoActualizadoPor)
+            .WithMany()
+            .HasForeignKey(v => v.EstadoActualizadoPorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<VentaItem>()
+            .Property(vi => vi.Nombre)
+            .HasMaxLength(150);
+
+        builder.Entity<VentaItem>()
+            .Property(vi => vi.Precio)
+            .HasColumnType("decimal(18,2)");
+
+        builder.Entity<VentaItem>()
+            .Property(vi => vi.Subtotal)
+            .HasColumnType("decimal(18,2)");
+
+        builder.Entity<VentaItem>()
+            .HasOne(vi => vi.Venta)
+            .WithMany(v => v.Items)
+            .HasForeignKey(vi => vi.VentaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<VentaItem>()
+            .HasOne(vi => vi.Producto)
+            .WithMany()
+            .HasForeignKey(vi => vi.ProductoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<VentaItemExtra>()
+            .HasKey(vie => new { vie.VentaItemId, vie.ExtraId });
+
+        builder.Entity<VentaItemExtra>()
+            .HasOne(vie => vie.VentaItem)
+            .WithMany(vi => vi.Extras)
+            .HasForeignKey(vie => vie.VentaItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<VentaItemExtra>()
+            .HasOne(vie => vie.Extra)
+            .WithMany()
+            .HasForeignKey(vie => vie.ExtraId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<RefreshToken>()
             .HasIndex(rt => rt.Token)

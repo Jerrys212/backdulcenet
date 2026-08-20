@@ -79,4 +79,9 @@ public class ProductoRepository(ApplicationDbContext db) : IProductoRepository
         existing.FechaActualizacion = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await db.Productos.AnyAsync(p => p.Id == id && p.Activo, cancellationToken);
+    }
 }
