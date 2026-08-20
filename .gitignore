@@ -10,7 +10,7 @@ obj/
 .vs/
 .idea/
 *.swp
-
+docs
 ## OS
 .DS_Store
 Thumbs.db

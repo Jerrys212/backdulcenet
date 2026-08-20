@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using DulceAtardecer.Common.Exceptions;
 using DulceAtardecer.Data;
 using DulceAtardecer.Models;
 using DulceAtardecer.Models.Dtos.Auth;
@@ -29,12 +30,12 @@ public class UserRepository(
         return user is null;
     }
 
-    public async Task<AuthResponseDto?> LoginAsync(LoginDto loginDto, CancellationToken cancellationToken = default)
+    public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto, CancellationToken cancellationToken = default)
     {
         ApplicationUser? user = await userManager.FindByNameAsync(loginDto.Username);
         if (user is null || !await userManager.CheckPasswordAsync(user, loginDto.Password))
         {
-            return null;
+            throw new UnauthorizedAccessException("Usuario o contraseña incorrectos.");
         }
 
         return await IssueTokensAsync(user, cancellationToken);
@@ -52,7 +53,11 @@ public class UserRepository(
         IdentityResult result = await userManager.CreateAsync(user, registerDto.Password);
         if (!result.Succeeded)
         {
-            throw new InvalidOperationException(string.Join("; ", result.Errors.Select(e => e.Description)));
+            var errors = new Dictionary<string, string[]>
+            {
+                ["register"] = result.Errors.Select(e => e.Description).ToArray()
+            };
+            throw new ValidationException(errors);
         }
 
         if (!await roleManager.RoleExistsAsync("User"))
@@ -123,7 +128,7 @@ public class UserRepository(
     {
         var claims = new List<Claim>
         {
-            new("id", user.Id),
+            new(ClaimTypes.NameIdentifier, user.Id),
             new("username", user.UserName ?? string.Empty)
         };
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));

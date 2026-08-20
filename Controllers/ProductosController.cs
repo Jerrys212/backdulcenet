@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using DulceAtardecer.Authorization;
 using DulceAtardecer.Constants;
 using DulceAtardecer.Models;
 using DulceAtardecer.Models.Dtos.Producto;
@@ -13,7 +12,7 @@ namespace DulceAtardecer.Controllers;
 [ApiController]
 [ApiVersionNeutral]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = "Admin")]
 public class ProductosController(IProductoRepository productoRepository, IWebHostEnvironment webHostEnvironment)
     : ControllerBase
 {
@@ -36,27 +35,16 @@ public class ProductosController(IProductoRepository productoRepository, IWebHos
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProductoDto>> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
-        Producto? producto = await productoRepository.GetByIdAsync(id, cancellationToken);
-        if (producto is null)
-        {
-            return NotFound();
-        }
-
+        Producto producto = await productoRepository.GetByIdAsync(id, cancellationToken);
         return Ok(producto.Adapt<ProductoDto>());
     }
 
     [HttpPost]
-    [HasPermission(Permissions.Productos.Create)]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ProductoDto>> CreateAsync([FromForm] CreateProductoDto createDto, CancellationToken cancellationToken)
     {
-        if (!await productoRepository.CategoriaExistsAsync(createDto.CategoriaId, cancellationToken))
-        {
-            return BadRequest("La categoría indicada no existe.");
-        }
-
         Producto producto = createDto.Adapt<Producto>();
         producto.ImgUrl = "https://placehold.co/400x400?text=Sin+Imagen";
         producto = await productoRepository.CreateAsync(producto, cancellationToken);
@@ -66,61 +54,40 @@ public class ProductosController(IProductoRepository productoRepository, IWebHos
             (string imgUrl, string imgUrlLocal) = await SaveImagenAsync(producto.Id, createDto.Imagen);
             producto.ImgUrl = imgUrl;
             producto.ImgUrlLocal = imgUrlLocal;
-            await productoRepository.UpdateAsync(producto, cancellationToken);
+            await productoRepository.UpdateAsync(producto.Id, producto, cancellationToken);
         }
 
-        Producto productoCreado = await productoRepository.GetByIdAsync(producto.Id, cancellationToken)
-            ?? producto;
+        Producto productoCreado = await productoRepository.GetByIdAsync(producto.Id, cancellationToken);
         ProductoDto result = productoCreado.Adapt<ProductoDto>();
         return CreatedAtAction(nameof(GetByIdAsync), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:int}")]
-    [HasPermission(Permissions.Productos.Update)]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateAsync(int id, [FromForm] UpdateProductoDto updateDto, CancellationToken cancellationToken)
     {
-        Producto? producto = await productoRepository.GetByIdAsync(id, cancellationToken);
-        if (producto is null)
-        {
-            return NotFound();
-        }
-
-        if (!await productoRepository.CategoriaExistsAsync(updateDto.CategoriaId, cancellationToken))
-        {
-            return BadRequest("La categoría indicada no existe.");
-        }
-
-        producto.Nombre = updateDto.Nombre;
-        producto.Descripcion = updateDto.Descripcion;
-        producto.Precio = updateDto.Precio;
-        producto.CategoriaId = updateDto.CategoriaId;
+        Producto producto = updateDto.Adapt<Producto>();
 
         if (updateDto.Imagen is not null)
         {
-            (string imgUrl, string imgUrlLocal) = await SaveImagenAsync(producto.Id, updateDto.Imagen);
+            (string imgUrl, string imgUrlLocal) = await SaveImagenAsync(id, updateDto.Imagen);
             producto.ImgUrl = imgUrl;
             producto.ImgUrlLocal = imgUrlLocal;
         }
 
-        await productoRepository.UpdateAsync(producto, cancellationToken);
+        await productoRepository.UpdateAsync(id, producto, cancellationToken);
         return NoContent();
     }
 
     [HttpDelete("{id:int}")]
-    [HasPermission(Permissions.Productos.Delete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteAsync(int id, CancellationToken cancellationToken)
     {
-        if (!await productoRepository.DeleteAsync(id, cancellationToken))
-        {
-            return NotFound();
-        }
-
+        await productoRepository.DeleteAsync(id, cancellationToken);
         return NoContent();
     }
 

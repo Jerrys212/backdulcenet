@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Asp.Versioning;
 using DulceAtardecer.Models.Dtos.Auth;
 using DulceAtardecer.Repository.IRepository;
@@ -17,11 +18,6 @@ public class AuthController(IUserRepository userRepository) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<AuthResponseDto>> RegisterAsync(RegisterDto registerDto, CancellationToken cancellationToken)
     {
-        if (!await userRepository.IsUniqueUserAsync(registerDto.Username, cancellationToken))
-        {
-            return BadRequest("El nombre de usuario ya está en uso.");
-        }
-
         AuthResponseDto response = await userRepository.RegisterAsync(registerDto, cancellationToken);
         return CreatedAtAction(nameof(RegisterAsync), response);
     }
@@ -32,12 +28,7 @@ public class AuthController(IUserRepository userRepository) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<AuthResponseDto>> LoginAsync(LoginDto loginDto, CancellationToken cancellationToken)
     {
-        AuthResponseDto? response = await userRepository.LoginAsync(loginDto, cancellationToken);
-        if (response is null)
-        {
-            return Unauthorized("Usuario o contraseña incorrectos.");
-        }
-
+        AuthResponseDto response = await userRepository.LoginAsync(loginDto, cancellationToken);
         return Ok(response);
     }
 
@@ -47,15 +38,8 @@ public class AuthController(IUserRepository userRepository) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<AuthResponseDto>> RefreshAsync(RefreshRequestDto refreshRequestDto, CancellationToken cancellationToken)
     {
-        try
-        {
-            AuthResponseDto response = await userRepository.RefreshAsync(refreshRequestDto.RefreshToken, cancellationToken);
-            return Ok(response);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(ex.Message);
-        }
+        AuthResponseDto response = await userRepository.RefreshAsync(refreshRequestDto.RefreshToken, cancellationToken);
+        return Ok(response);
     }
 
     [HttpPost("revoke")]
@@ -64,20 +48,10 @@ public class AuthController(IUserRepository userRepository) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RevokeAsync(RefreshRequestDto revokeRequestDto, CancellationToken cancellationToken)
     {
-        string? userId = User.FindFirst("id")?.Value;
-        if (userId is null)
-        {
-            return Unauthorized();
-        }
+        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new UnauthorizedAccessException("No se pudo identificar al usuario autenticado.");
 
-        try
-        {
-            await userRepository.RevokeAsync(revokeRequestDto.RefreshToken, userId, cancellationToken);
-            return NoContent();
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(ex.Message);
-        }
+        await userRepository.RevokeAsync(revokeRequestDto.RefreshToken, userId, cancellationToken);
+        return NoContent();
     }
 }

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 
-namespace DulceAtardecer.Authorization;
+namespace DulceAtardecer.Common.Authorization;
 
 public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
 {

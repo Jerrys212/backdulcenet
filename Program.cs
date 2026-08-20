@@ -1,14 +1,19 @@
 using System.Text;
 using Asp.Versioning;
-using DulceAtardecer.Authorization;
+using DulceAtardecer.Common.Authorization;
+using DulceAtardecer.Common.Filters;
+using DulceAtardecer.Common.Middleware;
 using DulceAtardecer.Constants;
 using DulceAtardecer.Data;
 using DulceAtardecer.Mapping;
 using DulceAtardecer.Models;
 using DulceAtardecer.Repository;
 using DulceAtardecer.Repository.IRepository;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -82,7 +87,13 @@ builder.Services.AddControllers(options =>
     options.SuppressAsyncSuffixInActionNames = false;
     options.CacheProfiles.Add(CacheProfiles.Default10, new Microsoft.AspNetCore.Mvc.CacheProfile { Duration = 10 });
     options.CacheProfiles.Add(CacheProfiles.Default20, new Microsoft.AspNetCore.Mvc.CacheProfile { Duration = 20 });
-});
+    options.Filters.Add<ApiResponseWrapperFilter>();
+    options.Filters.Add<ValidationFilter>();
+})
+    // El 400 automático de [ApiController] se apaga para que toda la validación
+    // (y su forma de respuesta) pase siempre por FluentValidation + ExceptionHandlingMiddleware.
+    .ConfigureApiBehaviorOptions(options => options.SuppressModelStateInvalidFilter = true);
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddResponseCaching();
 
 builder.Services.AddCors(options =>
@@ -98,6 +109,7 @@ builder.Services.AddOpenApi("v1");
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+builder.Services.AddScoped<ISubCategoriaRepository, SubCategoriaRepository>();
 builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
 
 MapsterConfig.RegisterMappings();
@@ -113,7 +125,22 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/openapi/v1.json", "DulceAtardecer v1");
         options.RoutePrefix = "swagger";
     });
+
+    // ASP.NET Core solo loguea "Now listening on: ..."; esto imprime el link directo a Swagger
+    // una vez que Kestrel ya resolvió las URLs reales (launchSettings, --urls, ASPNETCORE_URLS, etc.).
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        IServerAddressesFeature? addressesFeature = app.Services.GetRequiredService<IServer>()
+            .Features.Get<IServerAddressesFeature>();
+
+        foreach (string address in addressesFeature?.Addresses ?? [])
+        {
+            app.Logger.LogInformation("Swagger UI: {Url}/swagger", address);
+        }
+    });
 }
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
