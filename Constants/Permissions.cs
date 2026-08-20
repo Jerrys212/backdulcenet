@@ -44,6 +44,11 @@ public static class Permissions
         public const string Delete = "ventas.delete";
     }
 
+    public static class Reportes
+    {
+        public const string Read = "reportes.read";
+    }
+
     public static IReadOnlyList<string> GetAll()
     {
         return typeof(Permissions)
