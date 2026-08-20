@@ -60,6 +60,13 @@ public class CategoriaRepository(ApplicationDbContext db) : ICategoriaRepository
         Categoria existing = await db.Categorias.FirstOrDefaultAsync(c => c.Id == id && c.Activo, cancellationToken)
             ?? throw new NotFoundException(nameof(Categoria), id);
 
+        bool tieneDependientesActivos = await db.Productos.AnyAsync(p => p.CategoriaId == id && p.Activo, cancellationToken)
+            || await db.SubCategorias.AnyAsync(sc => sc.CategoriaId == id, cancellationToken);
+        if (tieneDependientesActivos)
+        {
+            throw new ConflictException("No se puede eliminar la categoría porque tiene productos o subcategorías activos asociados.");
+        }
+
         existing.Activo = false;
         existing.FechaActualizacion = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);

@@ -71,20 +71,16 @@ public class VentasController(
                 Cantidad = itemDto.Cantidad
             };
 
-            decimal extrasTotal = 0m;
             foreach (int extraId in itemDto.ExtraIds)
             {
                 Extra extra = await extraRepository.GetByIdAsync(extraId, cancellationToken);
-                extrasTotal += extra.Precio;
-                ventaItem.Extras.Add(new VentaItemExtra { ExtraId = extra.Id });
+                ventaItem.Extras.Add(new VentaItemExtra { ExtraId = extra.Id, Precio = extra.Precio });
             }
 
-            ventaItem.Subtotal = (producto.Precio * itemDto.Cantidad) + extrasTotal;
             venta.Items.Add(ventaItem);
         }
 
-        venta.Total = venta.Items.Sum(i => i.Subtotal);
-
+        // Subtotal/Total los recalcula y garantiza VentaRepository.CreateAsync.
         venta = await ventaRepository.CreateAsync(venta, cancellationToken);
         Venta ventaCreada = await ventaRepository.GetByIdAsync(venta.Id, cancellationToken);
         VentaDto result = ventaCreada.Adapt<VentaDto>();

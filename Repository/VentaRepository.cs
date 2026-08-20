@@ -41,6 +41,16 @@ public class VentaRepository(ApplicationDbContext db) : IVentaRepository
 
     public async Task<Venta> CreateAsync(Venta venta, CancellationToken cancellationToken = default)
     {
+        // Recalcula Subtotal/Total acá para que el invariante "Total = suma de subtotales,
+        // Subtotal = precio*cantidad + extras" quede garantizado por el repositorio, sin
+        // depender de que quien llame (hoy solo VentasController) haya hecho bien la cuenta.
+        foreach (VentaItem item in venta.Items)
+        {
+            item.Subtotal = (item.Precio * item.Cantidad) + item.Extras.Sum(e => e.Precio);
+        }
+
+        venta.Total = venta.Items.Sum(i => i.Subtotal);
+
         db.Ventas.Add(venta);
         await db.SaveChangesAsync(cancellationToken);
         return venta;

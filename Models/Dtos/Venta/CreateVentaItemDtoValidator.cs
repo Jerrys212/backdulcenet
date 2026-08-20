@@ -14,6 +14,9 @@ public class CreateVentaItemDtoValidator : AbstractValidator<CreateVentaItemDto>
         RuleFor(x => x.Cantidad)
             .GreaterThan(0).WithMessage("La cantidad debe ser mayor a 0.");
 
+        RuleFor(x => x.ExtraIds)
+            .NotNull().WithMessage("La lista de extras es obligatoria (puede ir vacía).");
+
         RuleForEach(x => x.ExtraIds)
             .MustAsync(async (id, ct) => await extraRepository.ExistsAsync(id, ct))
             .WithMessage("Uno de los extras indicados no existe.");

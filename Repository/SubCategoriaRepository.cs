@@ -49,6 +49,12 @@ public class SubCategoriaRepository(ApplicationDbContext db) : ISubCategoriaRepo
         SubCategoria existing = await db.SubCategorias.FirstOrDefaultAsync(sc => sc.Id == id, cancellationToken)
             ?? throw new NotFoundException(nameof(SubCategoria), id);
 
+        bool tieneProductos = await db.Productos.AnyAsync(p => p.SubCategoriaId == id && p.Activo, cancellationToken);
+        if (tieneProductos)
+        {
+            throw new ConflictException("No se puede eliminar la subcategoría porque tiene productos activos asociados.");
+        }
+
         db.SubCategorias.Remove(existing);
         await db.SaveChangesAsync(cancellationToken);
     }
